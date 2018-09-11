@@ -65,6 +65,9 @@ res
 ## ---- fig.show='hold', fig.height=4, fig.width=7, warning=FALSE----------
 plot(res)
 
+## ---- fig.show='hold', fig.height=4, fig.width=4, warning=FALSE----------
+plot_criterion(res)
+
 ## ---- eval=FALSE---------------------------------------------------------
 #  plot(res, params = params_process(res, method.selection = "DDSE"))
 
