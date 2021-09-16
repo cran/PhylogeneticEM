@@ -1,11 +1,22 @@
 ## ---- label="load", message=FALSE---------------------------------------------
 library(PhylogeneticEM)
 
-## ---- label="Simus_tree"------------------------------------------------------
+## ---- label="Simus_tree", eval = FALSE----------------------------------------
+#  set.seed(17920902)
+#  ntaxa = 80
+#  tree <- TreeSim::sim.bd.taxa.age(n = ntaxa, numbsim = 1, lambda = 0.1, mu = 0,
+#                                   age = 1, mrca = TRUE)[[1]]
+
+## ----label="Simus_tree_int", echo=FALSE---------------------------------------
 set.seed(17920902)
 ntaxa = 80
-tree <- TreeSim::sim.bd.taxa.age(n = ntaxa, numbsim = 1, lambda = 0.1, mu = 0,
-                                 age = 1, mrca = TRUE)[[1]]
+if (!requireNamespace("TreeSim", quietly = TRUE)) {
+  tree <- ape::rphylo(n = ntaxa, birth = 0.1, death = 0, T0 = 1)
+  tree$edge.length <- tree$edge.length / max(ape::vcv(tree))
+} else {
+  tree <- TreeSim::sim.bd.taxa.age(n = ntaxa, numbsim = 1, lambda = 0.1, mu = 0,
+                                   age = 1, mrca = TRUE)[[1]]
+}
 
 ## ---- label="Parameters"------------------------------------------------------
 params <- params_process("OU",                             ## Process
@@ -46,20 +57,47 @@ for (i in 1:nMiss){
   data[chars[i], tips[i]] <- NA                       ## Forget some values
 }
 
-## ---- label="Fit_EM", warning=FALSE-------------------------------------------
+## ---- label="Fit_EM", warning=FALSE, eval = FALSE-----------------------------
+#  ## Grid on alpha
+#  alpha_grid <- c(1, 3)
+#  
+#  ## Run algorithm
+#  res <- PhyloEM(phylo = tree,
+#                 Y_data = data,
+#                 process = "scOU",                   ## scalar OU model
+#                 random.root = TRUE,                 ## Root is stationary (true model)
+#                 stationary.root = TRUE,
+#                 alpha = alpha_grid,                 ## On a grid of alpha
+#                 K_max = 10,                         ## Maximal number of shifts
+#                 parallel_alpha = TRUE,              ## This can be set to TRUE for
+#                 Ncores = 2)                         ## parallel computations
+#  res
+
+## ----label="Fit_EM_int", echo=FALSE, warning = FALSE--------------------------
 ## Grid on alpha
 alpha_grid <- c(1, 3)
-
-## Run algorithm
-res <- PhyloEM(phylo = tree,
-               Y_data = data,
-               process = "scOU",                   ## scalar OU model
-               random.root = TRUE,                 ## Root is stationary (true model)
-               stationary.root = TRUE,
-               alpha = alpha_grid,                 ## On a grid of alpha
-               K_max = 10,                         ## Maximal number of shifts
-               parallel_alpha = TRUE,              ## This can be set to TRUE for
-               Ncores = 2)                         ## parallel computations
+if (!requireNamespace("doParallel", quietly = TRUE)) {
+  ## Run algorithm
+  res <- PhyloEM(phylo = tree,
+                 Y_data = data,
+                 process = "scOU",                   ## scalar OU model
+                 random.root = TRUE,                 ## Root is stationary (true model)
+                 stationary.root = TRUE,
+                 alpha = alpha_grid,                 ## On a grid of alpha
+                 K_max = 10,                         ## Maximal number of shifts
+                 parallel_alpha = FALSE)              ## This can be set to TRUE for
+} else {
+  ## Run algorithm
+  res <- PhyloEM(phylo = tree,
+                 Y_data = data,
+                 process = "scOU",                   ## scalar OU model
+                 random.root = TRUE,                 ## Root is stationary (true model)
+                 stationary.root = TRUE,
+                 alpha = alpha_grid,                 ## On a grid of alpha
+                 K_max = 10,                         ## Maximal number of shifts
+                 parallel_alpha = TRUE,              ## This can be set to TRUE for
+                 Ncores = 2)                         ## parallel computations
+}
 res
 
 ## ---- fig.show='hold', fig.height=4, fig.width=7, warning=FALSE---------------

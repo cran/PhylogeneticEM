@@ -1,3 +1,13 @@
+# PhylogeneticEM 1.5.0
+* Bug fix:
+  * `merge_rotations` now accepts datasets with entire species missing,
+  and throws an error when the missing data pattern is not compatible with a rotation.
+* Warnings:
+  * The function now throws a warning when two traits are very highly correlated.
+* CI:
+  * Replace Travis with Github Actions.
+  * Build doc automatically with GHA.
+
 # PhylogeneticEM 1.4.0
 * New option:
   * Add an option "show_axis_traits" to control the trait axis in a plot.
