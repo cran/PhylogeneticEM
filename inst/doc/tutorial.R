@@ -76,28 +76,15 @@ for (i in 1:nMiss){
 ## ----label="Fit_EM_int", echo=FALSE, warning = FALSE--------------------------
 ## Grid on alpha
 alpha_grid <- c(1, 3)
-if (!requireNamespace("doParallel", quietly = TRUE)) {
-  ## Run algorithm
-  res <- PhyloEM(phylo = tree,
-                 Y_data = data,
-                 process = "scOU",                   ## scalar OU model
-                 random.root = TRUE,                 ## Root is stationary (true model)
-                 stationary.root = TRUE,
-                 alpha = alpha_grid,                 ## On a grid of alpha
-                 K_max = 10,                         ## Maximal number of shifts
-                 parallel_alpha = FALSE)              ## This can be set to TRUE for
-} else {
-  ## Run algorithm
-  res <- PhyloEM(phylo = tree,
-                 Y_data = data,
-                 process = "scOU",                   ## scalar OU model
-                 random.root = TRUE,                 ## Root is stationary (true model)
-                 stationary.root = TRUE,
-                 alpha = alpha_grid,                 ## On a grid of alpha
-                 K_max = 10,                         ## Maximal number of shifts
-                 parallel_alpha = TRUE,              ## This can be set to TRUE for
-                 Ncores = 2)                         ## parallel computations
-}
+## Run algorithm
+res <- PhyloEM(phylo = tree,
+               Y_data = data,
+               process = "scOU",                   ## scalar OU model
+               random.root = TRUE,                 ## Root is stationary (true model)
+               stationary.root = TRUE,
+               alpha = alpha_grid,                 ## On a grid of alpha
+               K_max = 10,                         ## Maximal number of shifts
+               parallel_alpha = FALSE)              ## This can be set to TRUE for
 res
 
 ## ---- fig.show='hold', fig.height=4, fig.width=7, warning=FALSE---------------

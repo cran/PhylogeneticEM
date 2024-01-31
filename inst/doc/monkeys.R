@@ -19,26 +19,14 @@ plot(params_BM(p = 2),
 #  res
 
 ## ----label="Fit_EM_int", echo=FALSE, warning=FALSE, message=FALSE-------------
-if (!requireNamespace("doParallel", quietly = TRUE)) {
-  res <- PhyloEM(phylo = monkeys$phy,
-                 Y_data = monkeys$dat,
-                 process = "scOU",                   ## scalar OU model
-                 random.root = TRUE,                 ## Root is stationary
-                 stationary.root = TRUE,
-                 nbr_alpha = 4,                      ## Number of alpha values tested (should be raised)
-                 K_max = 10,                         ## Maximal number of shifts
-                 parallel_alpha = FALSE)              ## This can be set to TRUE for
-} else {
-  res <- PhyloEM(phylo = monkeys$phy,
-                 Y_data = monkeys$dat,
-                 process = "scOU",                   ## scalar OU model
-                 random.root = TRUE,                 ## Root is stationary
-                 stationary.root = TRUE,
-                 nbr_alpha = 4,                      ## Number of alpha values tested (should be raised)
-                 K_max = 10,                         ## Maximal number of shifts
-                 parallel_alpha = TRUE,              ## This can be set to TRUE for
-                 Ncores = 2)                         ## parallel computations
-}
+res <- PhyloEM(phylo = monkeys$phy,
+               Y_data = monkeys$dat,
+               process = "scOU",                   ## scalar OU model
+               random.root = TRUE,                 ## Root is stationary
+               stationary.root = TRUE,
+               nbr_alpha = 4,                      ## Number of alpha values tested (should be raised)
+               K_max = 10,                         ## Maximal number of shifts
+               parallel_alpha = FALSE)              ## This can be set to TRUE for
 res
 
 ## ---- fig.show='hold', fig.height=4, fig.width=7, warning=FALSE---------------
@@ -88,28 +76,15 @@ rot <- matrix(c(cos(theta), -sin(theta), sin(theta), cos(theta)),
 Yrot <- t(rot) %*% monkeys$dat
 rownames(Yrot) <- rownames(monkeys$dat)
 
-if (!requireNamespace("doParallel", quietly = TRUE)) {
-  # PhyloEM on rotated data
-  res_rot <- PhyloEM(phylo = monkeys$phy,
-                     Y_data = Yrot,                      ## rotated data
-                     process = "scOU",                   
-                     random.root = TRUE,                 
-                     stationary.root = TRUE,
-                     nbr_alpha = 4,
-                     K_max = 10,                         
-                     parallel_alpha = FALSE)              
-} else {
-  # PhyloEM on rotated data
-  res_rot <- PhyloEM(phylo = monkeys$phy,
-                     Y_data = Yrot,                      ## rotated data
-                     process = "scOU",                   
-                     random.root = TRUE,                 
-                     stationary.root = TRUE,
-                     nbr_alpha = 4,
-                     K_max = 10,                         
-                     parallel_alpha = TRUE,              
-                     Ncores = 2)  
-}
+# PhyloEM on rotated data
+res_rot <- PhyloEM(phylo = monkeys$phy,
+                   Y_data = Yrot,                      ## rotated data
+                   process = "scOU",                   
+                   random.root = TRUE,                 
+                   stationary.root = TRUE,
+                   nbr_alpha = 4,
+                   K_max = 10,                         
+                   parallel_alpha = FALSE)              
 
 ## ---- fig.show='hold', fig.height=4, fig.width=7, warning=FALSE---------------
 plot(res_rot)
@@ -166,28 +141,15 @@ rot2 <- matrix(c(cos(theta), -sin(theta), sin(theta), cos(theta)),
 Yrot2 <- t(rot2) %*% monkeys$dat
 rownames(Yrot2) <- rownames(monkeys$dat)
 
-if (!requireNamespace("doParallel", quietly = TRUE)) {
-  # PhyloEM on rotated data
-  res_rot2 <- PhyloEM(phylo = monkeys$phy,
-                      Y_data = Yrot2,
-                      process = "scOU",                   
-                      random.root = TRUE,                 
-                      stationary.root = TRUE,
-                      nbr_alpha = 2,           ## Note that this can also be different
-                      K_max = 10,                        
-                      parallel_alpha = FALSE)       
-} else {
-  # PhyloEM on rotated data
-  res_rot2 <- PhyloEM(phylo = monkeys$phy,
-                      Y_data = Yrot2,
-                      process = "scOU",                   
-                      random.root = TRUE,                 
-                      stationary.root = TRUE,
-                      nbr_alpha = 2,           ## Note that this can also be different
-                      K_max = 10,                        
-                      parallel_alpha = TRUE,            
-                      Ncores = 2)  
-}
+# PhyloEM on rotated data
+res_rot2 <- PhyloEM(phylo = monkeys$phy,
+                    Y_data = Yrot2,
+                    process = "scOU",                   
+                    random.root = TRUE,                 
+                    stationary.root = TRUE,
+                    nbr_alpha = 2,           ## Note that this can also be different
+                    K_max = 10,                        
+                    parallel_alpha = FALSE)       
 # Merge
 res_merge2 <- merge_rotations(res, res_rot, res_rot2)
 
@@ -206,26 +168,14 @@ plot_criterion(res_merge2)
 #                     allow_negative = TRUE)    ## allow negative alpha in the grid
 
 ## ----label="Fit_EM_negative_int", echo=FALSE, warning=FALSE, message=FALSE----
-if (!requireNamespace("doParallel", quietly = TRUE)) {
-  res_neg <- PhyloEM(phylo = monkeys$phy,
-                     Y_data = monkeys$dat,
-                     process = "scOU",
-                     random.root = FALSE,      ## root needs to be fixed
-                     K_max = 10,
-                     parallel_alpha = FALSE,
-                     nbr_alpha = 4,            ## 2 negative, 2 positive (should be more)
-                     allow_negative = TRUE)    ## allow negative alpha in the grid      
-} else {
-  res_neg <- PhyloEM(phylo = monkeys$phy,
-                     Y_data = monkeys$dat,
-                     process = "scOU",
-                     random.root = FALSE,      ## root needs to be fixed
-                     K_max = 10,
-                     parallel_alpha = TRUE,
-                     Ncores = 2,
-                     nbr_alpha = 4,            ## 2 negative, 2 positive (should be more)
-                     allow_negative = TRUE)    ## allow negative alpha in the grid
-}
+res_neg <- PhyloEM(phylo = monkeys$phy,
+                   Y_data = monkeys$dat,
+                   process = "scOU",
+                   random.root = FALSE,      ## root needs to be fixed
+                   K_max = 10,
+                   parallel_alpha = FALSE,
+                   nbr_alpha = 4,            ## 2 negative, 2 positive (should be more)
+                   allow_negative = TRUE)    ## allow negative alpha in the grid      
 
 ## -----------------------------------------------------------------------------
 params_process(res_neg, K = 0)
