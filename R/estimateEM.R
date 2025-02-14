@@ -220,11 +220,11 @@ estimateEM <- function(phylo,
                        var.init.root = diag(1, nrow(Y_data)),
                        variance.init = diag(1, nrow(Y_data), nrow(Y_data)),
                        methods.segmentation = c(#"max_costs_0", 
-                                                "lasso", 
-                                                "same_shifts", 
-                                                #"same_shifts_same_values",
-                                                "best_single_move"),
-                                                #"lasso_one_move"),
+                         "lasso", 
+                         "same_shifts", 
+                         #"same_shifts_same_values",
+                         "best_single_move"),
+                       #"lasso_one_move"),
                        check.tips.names = FALSE,
                        times_shared = NULL, # These can be specified to save time
                        distances_phylo = NULL, 
@@ -442,7 +442,7 @@ estimateEM <- function(phylo,
   known.selection.strength <-  known.selection.strength / factor_rescale
   init.selection.strength <- init.selection.strength / factor_rescale
   variance.init <- variance.init / factor_rescale
-
+  
   ########## Initialization of alpha and Variance #############################
   init.a.g <- init.alpha.gamma(method.init.alpha)(phylo = phylo,
                                                   Y_data = Y_data,
@@ -716,11 +716,11 @@ estimateEM <- function(phylo,
     # compute_log_likelihood  <- compute_log_likelihood.simple
     # compute_mahalanobis_distance  <- compute_mahalanobis_distance.simple
   }
-
+  
   if (independent){
     params_scOU <- split_params_independent(params_scOU)
   }
-
+  
   temp <- wrapper_E_step(phylo = phylo,
                          times_shared = times_shared,
                          distances_phylo = distances_phylo,
@@ -895,7 +895,7 @@ estimateEM <- function(phylo,
 #' }
 #'
 #' @param phylo A phylogenetic tree of class \code{phylo} 
-#' (from package \code{\link{ape}}).
+#' (from package \code{\link[ape]{ape}}).
 #' @param Y_data Matrix of data at the tips, size p x ntaxa. Each line is a
 #' trait, and each column is a tip. The column names are checked against the
 #' tip names of the tree.
@@ -988,10 +988,10 @@ estimateEM <- function(phylo,
 #' its subsequent manipulations can be faster (especially for plotting).
 #' @param tol_tree tolerance to consider a branch length significantly greater than zero, or
 #' two lineages lengths to be different, when checking for ultrametry. 
-#' (Default to .Machine$double.eps^0.5). See \code{\link{is.ultrametric}} and \code{\link{di2multi}}.
+#' (Default to .Machine$double.eps^0.5). See \code{\link[ape]{is.ultrametric}} and \code{\link[ape]{di2multi}}.
 #' @param allow_negative whether to allow negative values for alpha (Early Burst).
 #' See details. Default to FALSE.
-#' @param option_is.ultrametric option for \code{\link{is.ultrametric}} check. Default to 1.
+#' @param option_is.ultrametric option for \code{\link[ape]{is.ultrametric}} check. Default to 1.
 #' @param trait_correlation_threshold the trait correlation threshold to stop the analysis. Default to 0.9.
 #' @param ... Further arguments to be passed to \code{\link{estimateEM}}, including
 #' tolerance parameters for stopping criteria, maximal number of iterations, etc.
@@ -1171,6 +1171,8 @@ PhyloEM <- function(phylo, Y_data, process = c("BM", "OU", "scOU", "rBM"),
     method.selection <- method.selection[method.selection != "BGHlsqraw"]
   }
   if (length(method.selection) == 0) stop("No selection method were selected or suited to the problem (see relevant warnings). Please fix before carying on.")
+  ## sort methods for reproducibility
+  method.selection <- sort(method.selection)
   
   ## Inference per se
   if (!is.null(estimates)){ # If the user already has the estimates
@@ -1301,6 +1303,13 @@ PhyloEM <- function(phylo, Y_data, process = c("BM", "OU", "scOU", "rBM"),
     X <- model_selection(meth.sel)
   }
   
+  X$method.selection <- method.selection
+  X$C.BM1 <- C.BM1
+  X$C.BM2 <- C.BM2
+  X$C.LINselect <- C.LINselect
+  X$independent <- independent
+  X$grid_alpha <- alpha_grid
+  
   ## Class and return
   class(X) <- "PhyloEM"
   return(X)
@@ -1358,12 +1367,12 @@ params_process.PhyloEM <- function(x, method.selection = NULL,
     if (!(K %in% x$K_try)){
       stop(paste0("The value of K: ", K, " was not found in the fitted object."))
     }
-  ## Select a given alpha
+    ## Select a given alpha
     if (!is.null(alpha)){
       if (alpha == 0){
         tmp <- which("alpha_0" == names(x))
       } else {
-        tmp <- grep(alpha, names(x))
+        tmp <- which(grepl(alpha, names(x)) & grepl("alpha", names(x)))
       }
       if (length(tmp) == 0){
         stop(paste0("The value of alpha: ", alpha, " was not found in the fitted object."))
@@ -1381,14 +1390,14 @@ params_process.PhyloEM <- function(x, method.selection = NULL,
       res <- x[[alpha_name]]$params_estim[[paste0(K)]] 
     }
   } else {
-  ## Take the selected parameters (default)
+    ## Take the selected parameters (default)
     m_sel <- get_method_selection(x, method.selection = method.selection)
     res <- extract_params(x, m_sel[1], m_sel[2])
   }
   ## Case scOU with negative value
   if ((length(as.vector(res$selection.strength)) == 1)
-        && (res$selection.strength < 0)
-        && !rBM) {
+      && (res$selection.strength < 0)
+      && !rBM) {
     warning("The 'selection strength' is negative. One should only look at the un-normalized values of the shifts. To do so, please call this function using 'rBM = TRUE'.")
   }
   ## Return to rBM parameters if needed
@@ -1663,7 +1672,7 @@ find_rotation <- function(res1, res2, tol = NULL) {
   if (!testQR) stop("The datasets are not linearly mapped.")
   # Rotation ?
   rot <- fit_12$coefficients
-  testRot <- isTRUE(all.equal(as.vector(t(rot) %*% rot), c(1, 0, 0, 1)))
+  testRot <- isTRUE(all.equal(unname(t(rot) %*% rot), diag(rep(1.0, ncol(rot)))))
   if (!testRot) stop("The datasets are not linked by a rotation.")
   return(unname(rot))
 }
@@ -1830,7 +1839,7 @@ compute_ancestral_traits <- function(x,
     )
     return(res)
   }
-
+  
   ## Needed quatities
   ntaxa <- length(x$phylo$tip.label)
   miss <- as.vector(is.na(x$Y_data))
@@ -2267,82 +2276,82 @@ PhyloEM_grid_alpha <- function(phylo, Y_data, process = c("BM", "OU", "scOU", "r
            call. = FALSE)
     }
     cl <- parallel::makeCluster(Ncores, outfile = "")
-                                # outfile = tempfile(pattern = "log_file_dopar_"))
+    # outfile = tempfile(pattern = "log_file_dopar_"))
     doParallel::registerDoParallel(cl)
     X <- foreach::foreach(a_greek = alpha, .packages = reqpckg) %dopar%
-    {
-      estimate_alpha_several_K(alp = a_greek,
-                               original_phy = original_phy, Y_data = Y_data,
-                               process_original = process_original,
-                               process = process,
-                               independent = independent,
-                               K_max = K_max, 
-                               use_previous = use_previous,
-                               order = order,
-                               method.variance = method.variance,
-                               method.init = method.init,
-                               method.init.alpha = method.init.alpha,
-                               method.init.alpha.estimation = method.init.alpha.estimation, 
-                               methods.segmentation = methods.segmentation,
-                               alpha_known = alpha_known,
-                               random.root = random.root,
-                               stationary.root = stationary.root,
-                               sBM_variance = sBM_variance,
-                               method.OUsun = method.OUsun,
-                               # impute_init_Rphylopars = impute_init_Rphylopars,
-                               p = p,
-                               ntaxa = ntaxa,
-                               progress.bar = progress.bar,
-                               times_shared_original = times_shared_original,
-                               distances_phylo_original = distances_phylo_original,
-                               subtree.list_original = subtree.list_original,
-                               h_tree_original = h_tree_original,
-                               T_tree = T_tree,
-                               U_tree = U_tree,
-                               K_lag_init = K_lag_init,
-                               light_result = light_result,
-                               allow_negative = allow_negative,
-                               trait_correlation_threshold = trait_correlation_threshold,
-                               ...)
-    }
+      {
+        estimate_alpha_several_K(alp = a_greek,
+                                 original_phy = original_phy, Y_data = Y_data,
+                                 process_original = process_original,
+                                 process = process,
+                                 independent = independent,
+                                 K_max = K_max, 
+                                 use_previous = use_previous,
+                                 order = order,
+                                 method.variance = method.variance,
+                                 method.init = method.init,
+                                 method.init.alpha = method.init.alpha,
+                                 method.init.alpha.estimation = method.init.alpha.estimation, 
+                                 methods.segmentation = methods.segmentation,
+                                 alpha_known = alpha_known,
+                                 random.root = random.root,
+                                 stationary.root = stationary.root,
+                                 sBM_variance = sBM_variance,
+                                 method.OUsun = method.OUsun,
+                                 # impute_init_Rphylopars = impute_init_Rphylopars,
+                                 p = p,
+                                 ntaxa = ntaxa,
+                                 progress.bar = progress.bar,
+                                 times_shared_original = times_shared_original,
+                                 distances_phylo_original = distances_phylo_original,
+                                 subtree.list_original = subtree.list_original,
+                                 h_tree_original = h_tree_original,
+                                 T_tree = T_tree,
+                                 U_tree = U_tree,
+                                 K_lag_init = K_lag_init,
+                                 light_result = light_result,
+                                 allow_negative = allow_negative,
+                                 trait_correlation_threshold = trait_correlation_threshold,
+                                 ...)
+      }
     parallel::stopCluster(cl)
   } else {
     X <- foreach::foreach(a_greek = alpha, .packages = reqpckg) %do%
-    {
-      estimate_alpha_several_K(alp = a_greek,
-                               original_phy = original_phy, Y_data = Y_data,
-                               process_original = process_original,
-                               process = process,
-                               independent = independent,
-                               K_max = K_max, 
-                               use_previous = use_previous,
-                               order = order,
-                               method.variance = method.variance,
-                               method.init = method.init,
-                               method.init.alpha = method.init.alpha,
-                               method.init.alpha.estimation = method.init.alpha.estimation, 
-                               methods.segmentation = methods.segmentation,
-                               alpha_known = alpha_known,
-                               random.root = random.root,
-                               stationary.root = stationary.root,
-                               sBM_variance = sBM_variance,
-                               method.OUsun = method.OUsun,
-                               # impute_init_Rphylopars = impute_init_Rphylopars,
-                               p = p,
-                               ntaxa = ntaxa,
-                               progress.bar = progress.bar,
-                               times_shared_original = times_shared_original,
-                               distances_phylo_original = distances_phylo_original,
-                               subtree.list_original = subtree.list_original,
-                               h_tree_original = h_tree_original,
-                               T_tree = T_tree,
-                               U_tree = U_tree,
-                               K_lag_init = K_lag_init,
-                               light_result = light_result,
-                               allow_negative = allow_negative,
-                               trait_correlation_threshold = trait_correlation_threshold,
-                               ...)
-    }
+      {
+        estimate_alpha_several_K(alp = a_greek,
+                                 original_phy = original_phy, Y_data = Y_data,
+                                 process_original = process_original,
+                                 process = process,
+                                 independent = independent,
+                                 K_max = K_max, 
+                                 use_previous = use_previous,
+                                 order = order,
+                                 method.variance = method.variance,
+                                 method.init = method.init,
+                                 method.init.alpha = method.init.alpha,
+                                 method.init.alpha.estimation = method.init.alpha.estimation, 
+                                 methods.segmentation = methods.segmentation,
+                                 alpha_known = alpha_known,
+                                 random.root = random.root,
+                                 stationary.root = stationary.root,
+                                 sBM_variance = sBM_variance,
+                                 method.OUsun = method.OUsun,
+                                 # impute_init_Rphylopars = impute_init_Rphylopars,
+                                 p = p,
+                                 ntaxa = ntaxa,
+                                 progress.bar = progress.bar,
+                                 times_shared_original = times_shared_original,
+                                 distances_phylo_original = distances_phylo_original,
+                                 subtree.list_original = subtree.list_original,
+                                 h_tree_original = h_tree_original,
+                                 T_tree = T_tree,
+                                 U_tree = U_tree,
+                                 K_lag_init = K_lag_init,
+                                 light_result = light_result,
+                                 allow_negative = allow_negative,
+                                 trait_correlation_threshold = trait_correlation_threshold,
+                                 ...)
+      }
   }
   
   ## Format Output
@@ -2350,7 +2359,7 @@ PhyloEM_grid_alpha <- function(phylo, Y_data, process = c("BM", "OU", "scOU", "r
   X$Y_data <- Y_data
   X$K_try <- 0:K_max
   X$ntaxa <- ntaxa
-
+  
   ## Select max solution for each K
   X <- merge_max_grid_alpha(X, alpha, light_result)
   # if ("BGHlsq" %in% method.selection){
@@ -2650,7 +2659,7 @@ merge_max_grid_alpha <- function(X, alpha, light_result = TRUE){
   for (K_t in X$K_try){
     max_sum <- summary_all[summary_all$K_try == K_t, ]
     max_sum <- max_sum[max_sum$log_likelihood == max(max_sum$log_likelihood), ]
-# subset(subset(summary_all, K_try == K_t), log_likelihood == max(log_likelihood))
+    # subset(subset(summary_all, K_try == K_t), log_likelihood == max(log_likelihood))
     res_max <- X[[paste0("alpha_", max_sum$alpha_name)]]
     params <- res_max$params_estim[[paste(K_t)]]
     X$alpha_max$results_summary[K_t + 1, ] <- as.vector(unname(as.matrix(max_sum)))
@@ -2697,7 +2706,7 @@ merge_min_grid_alpha <- function(X, light_result = TRUE, raw = FALSE){
     alpha_min_str <- "alpha_min"
   }
   X[[alpha_min_str]]$results_summary <- matrix(NA, nrow = length(X$K_try),
-                                        ncol = ncol(summary_all))
+                                               ncol = ncol(summary_all))
   colnames(X[[alpha_min_str]]$results_summary) <- colnames(summary_all)
   X[[alpha_min_str]]$edge.quality <- vector(length = length(X$K_try), mode = "list")
   for (K_t in X$K_try){
@@ -3270,4 +3279,110 @@ add_method_selection <- function(meth, method.selection){
     method.selection <- c(method.selection, meth)
   }
   return(method.selection)
+}
+
+##
+#' @title Merge PhyloEM fits on various grids of alpha values
+#'
+#' @description
+#' \code{merge_alpha_grids} takes several fits from \code{\link{PhyloEM}}, and
+#' merge them so as to take into account all alpha values.
+#' This can be used to break down computations into smaller chunks to be run independently.
+#'
+#' @param ... objects of class \code{\link{PhyloEM}} fitted on the same dataset 
+#' with the same parameters, but different grids of alpha values.
+#' 
+#' @examples
+#' \dontrun{
+#' ## Load Data
+#' data(monkeys)
+#' ## First fit with coarse grid
+#' res1 <- PhyloEM(Y_data = monkeys$dat,
+#'                 phylo = monkeys$phy,
+#'                 process = "scOU",
+#'                 random.root = TRUE,
+#'                 stationary.root = TRUE,
+#'                 K_max = 10,
+#'                 alpha = c(0.2, 0.3),
+#'                 parallel_alpha = TRUE,
+#'                 Ncores = 2)
+#' ## Second fit with finer grid
+#' res2 <- PhyloEM(Y_data = monkeys$dat,
+#'                 phylo = monkeys$phy,
+#'                 process = "scOU",
+#'                 random.root = TRUE,
+#'                 stationary.root = TRUE,
+#'                 K_max = 10,
+#'                 alpha = c(0.22, 0.24),
+#'                 parallel_alpha = TRUE,
+#'                 Ncores = 2)
+#' ## Thrid fit with redundancies
+#' res3 <- PhyloEM(Y_data = monkeys$dat,
+#'                 phylo = monkeys$phy,
+#'                 process = "scOU",
+#'                 random.root = TRUE,
+#'                 stationary.root = TRUE,
+#'                 K_max = 10,
+#'                 alpha = c(0.26, 0.3),
+#'                 parallel_alpha = TRUE,
+#'                 Ncores = 2)
+#'
+#' ## Merge the three
+#' res_merge <- merge_alpha_grids(res1, res2, res3)
+#' ## Plot the selected result
+#' plot(res_merge)
+#' ## Plot the model selection criterion
+#' plot_criterion(res_merge)
+#' }
+#' 
+#' @return
+#' An object of class \code{\link{PhyloEM}}, result of the merge.
+#' 
+#' @export
+#'
+##
+merge_alpha_grids <- function(...) {
+  ress <- list(...)
+  ## Basic tests
+  nres <- length(ress)
+  if (nres == 0) stop("There should be at least 2 results to merge.")
+  if (nres == 1) return(ress[[1]])
+  resmerge <- ress[[1]]
+  if (!resmerge$grid_alpha) stop("Fits must be performed on a grid of alpha values.")
+  ## same fits ?
+  names_identical <- names(resmerge)[!grepl("alpha_*", names(resmerge))]
+  for (rr in 2:nres) {
+    for (nn in names_identical) {
+      if (!isTRUE(all.equal(resmerge[[nn]], ress[[rr]][[nn]]))) {
+        stop(paste0("Component ", nn, " of PhyloEM results number 1 and number ", rr, " are different."))
+      }
+    }
+  }
+  ## merge alpha results
+  for (rr in 2:nres) {
+    alpha_results <- grep("alpha_-?[[:digit:]]", names(ress[[rr]]))
+    for (aa in alpha_results) {
+      resmerge[[names(ress[[rr]])[aa]]] <- ress[[rr]][[names(ress[[rr]])[aa]]]
+    }
+  }
+  get_alpha_values <- function(res) {
+    alpha_names <- names(res)[grep("alpha_-?[[:digit:]]", names(res))]
+    alpha_names <- sub("alpha_", "", alpha_names)
+    alpha_values <- as.numeric(alpha_names)
+    return(sort(alpha_values))
+  }
+  alpha_merge <- get_alpha_values(resmerge)
+  
+  ## alpha max and min
+  resmerge <- merge_max_grid_alpha(resmerge, alpha_merge, resmerge$light_result)
+  resmerge <- merge_min_grid_alpha(resmerge, resmerge$light_result) 
+  resmerge <- merge_min_grid_alpha(resmerge, resmerge$light_result, raw = TRUE) 
+  
+  ## Model selection
+  resmerge <- model_selection(resmerge,
+                              method.selection = resmerge$method.selection,
+                              C.BM1 = resmerge$C.BM1, C.BM2 = resmerge$C.BM2, C.LINselect = resmerge$C.LINselect,
+                              independent = resmerge$independent)
+  
+  return(resmerge)
 }

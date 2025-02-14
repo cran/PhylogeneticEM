@@ -1,7 +1,7 @@
-## ---- label="load", message=FALSE---------------------------------------------
+## ----label="load", message=FALSE----------------------------------------------
 library(PhylogeneticEM)
 
-## ---- label="Simus_tree", eval = FALSE----------------------------------------
+## ----label="Simus_tree", eval = FALSE-----------------------------------------
 #  set.seed(17920902)
 #  ntaxa = 80
 #  tree <- TreeSim::sim.bd.taxa.age(n = ntaxa, numbsim = 1, lambda = 0.1, mu = 0,
@@ -18,7 +18,7 @@ if (!requireNamespace("TreeSim", quietly = TRUE)) {
                                    age = 1, mrca = TRUE)[[1]]
 }
 
-## ---- label="Parameters"------------------------------------------------------
+## ----label="Parameters"-------------------------------------------------------
 params <- params_process("OU",                             ## Process
                          p = 2,                            ## Dimension
                          variance = diag(0.5, 2, 2) + 0.5, ## Rate matrix
@@ -30,22 +30,22 @@ params <- params_process("OU",                             ## Process
                                         c(-4, -5),
                                         c(5, -3)))
 
-## ---- fig.show='hold', fig.height=3, fig.width=3.4----------------------------
+## ----fig.show='hold', fig.height=3, fig.width=3.4-----------------------------
 plot(params, phylo = tree, traits = 1, value_in_box = TRUE, shifts_bg = "white")
 plot(params, phylo = tree, traits = 2, value_in_box = TRUE, shifts_bg = "white")
 
-## ---- label="Simu_process", message=FALSE-------------------------------------
+## ----label="Simu_process", message=FALSE--------------------------------------
 sim <- simul_process(params, tree)
 
-## ---- label="extraction"------------------------------------------------------
+## ----label="extraction"-------------------------------------------------------
 data <- extract(sim,             ## The simul_process object
                 what = "states", ## We want the actual values
                 where = "tips")  ## Only at the tips of the tree
 
-## ---- label="rownames"--------------------------------------------------------
+## ----label="rownames"---------------------------------------------------------
 rownames(data) <- c("A", "B")
 
-## ---- fig.show='hold', fig.height=4, fig.width=7------------------------------
+## ----fig.show='hold', fig.height=4, fig.width=7-------------------------------
 plot(params, phylo = tree, data = data)
 
 ## -----------------------------------------------------------------------------
@@ -57,7 +57,7 @@ for (i in 1:nMiss){
   data[chars[i], tips[i]] <- NA                       ## Forget some values
 }
 
-## ---- label="Fit_EM", warning=FALSE, eval = FALSE-----------------------------
+## ----label="Fit_EM", warning=FALSE, eval = FALSE------------------------------
 #  ## Grid on alpha
 #  alpha_grid <- c(1, 3)
 #  
@@ -87,16 +87,16 @@ res <- PhyloEM(phylo = tree,
                parallel_alpha = FALSE)              ## This can be set to TRUE for
 res
 
-## ---- fig.show='hold', fig.height=4, fig.width=7, warning=FALSE---------------
+## ----fig.show='hold', fig.height=4, fig.width=7, warning=FALSE----------------
 plot(res)
 
-## ---- fig.show='hold', fig.height=4, fig.width=4, warning=FALSE---------------
+## ----fig.show='hold', fig.height=4, fig.width=4, warning=FALSE----------------
 plot_criterion(res)
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  plot(res, params = params_process(res, method.selection = "DDSE"))
 
-## ---- fig.show='hold', fig.height=4, fig.width=7, warning=FALSE---------------
+## ----fig.show='hold', fig.height=4, fig.width=7, warning=FALSE----------------
 plot(res, params = params_process(res, K = 3, alpha = 1))
 
 ## -----------------------------------------------------------------------------
@@ -106,6 +106,6 @@ params_process(res, K = 3, alpha = 3)$shifts
 ## -----------------------------------------------------------------------------
 params_6 <- params_process(res, K = 6)
 
-## ---- fig.show='hold', fig.height=4, fig.width=8, warning=FALSE---------------
+## ----fig.show='hold', fig.height=4, fig.width=8, warning=FALSE----------------
 plot(equivalent_shifts(tree, params_6))
 
